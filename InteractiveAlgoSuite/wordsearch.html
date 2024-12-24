@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question 4: Word Search Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-2xl p-6 bg-white rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800 text-center">Word Search Solver</h1>
+
+        <!-- Instructions -->
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
+            <p><strong>Instructions:</strong></p>
+            <ul class="list-disc pl-6">
+                <li>Enter the grid as rows of letters, separating each letter with a comma (e.g., A,B,C).</li>
+                <li>Press "Add Row" to build your grid dynamically.</li>
+                <li>Input the word to search for in the grid below.</li>
+                <li>Click "Solve" to see if the word exists!</li>
+            </ul>
+        </div>
+
+        <!-- Grid Input Section -->
+        <div>
+            <label class="block text-gray-700 font-medium mb-2">Grid Input:</label>
+            <div id="gridContainer" class="space-y-2">
+                <div class="flex space-x-2">
+                    <input class="grid-row-input w-full p-2 border border-gray-300 rounded"
+                           placeholder="Enter row (e.g., A,B,C)" />
+                </div>
+            </div>
+            <button id="addRow"
+                    class="mt-3 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Add Row
+            </button>
+        </div>
+
+        <!-- Word Input Section -->
+        <div class="mt-6">
+            <label for="word" class="block text-gray-700 font-medium mb-2">Word to Search:</label>
+            <input id="word" type="text" class="w-full p-2 border border-gray-300 rounded"
+                   placeholder="Enter the word to search for (e.g., ABCCED)" />
+        </div>
+
+        <!-- Solve Button -->
+        <button id="solve"
+                class="mt-6 w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
+            Solve
+        </button>
+
+        <!-- Result Section -->
+        <div id="result" class="mt-6 hidden p-4 rounded-lg"></div>
+    </div>
+
+    <script>
+        const gridContainer = document.getElementById("gridContainer");
+        const addRowButton = document.getElementById("addRow");
+        const solveButton = document.getElementById("solve");
+        const resultDiv = document.getElementById("result");
+
+        // Add a new row to the grid input
+        addRowButton.addEventListener("click", () => {
+            const rowDiv = document.createElement("div");
+            rowDiv.classList.add("flex", "space-x-2");
+            rowDiv.innerHTML = `
+                <input class="grid-row-input w-full p-2 border border-gray-300 rounded"
+                       placeholder="Enter row (e.g., A,B,C)" />
+            `;
+            gridContainer.appendChild(rowDiv);
+        });
+
+        // Solve the word search
+        solveButton.addEventListener("click", async () => {
+            const gridRows = document.querySelectorAll(".grid-row-input");
+            const grid = Array.from(gridRows)
+                .map(row => row.value.trim().split(","))
+                .filter(row => row.length > 0);
+
+            const word = document.getElementById("word").value.trim();
+
+            if (grid.length === 0 || word === "") {
+                alert("Please enter a valid grid and word.");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/wordsearch", { // Updated URL
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ grid, word })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                } else {
+                    resultDiv.classList.remove("hidden");
+                    resultDiv.textContent = data.exists
+                        ? `The word "${word}" exists in the grid! 🎉`
+                        : `The word "${word}" does not exist in the grid. 😞`;
+                    resultDiv.classList.add(data.exists ? "bg-green-100" : "bg-red-100");
+                }
+            } catch (error) {
+                alert("An error occurred while processing the grid.");
+            }
+        });
+    </script>
+</body>
+</html>
